@@ -8,8 +8,9 @@ class Receiver:
         """
         self.loss_rate = loss_rate
         self.ack_loss_rate = ack_loss_rate
-        self.received_packets = {}   # store packet_id -> data
-        self.lost_packets = []       # keep track of lost packet IDs
+        self.received_packets = {}   # packet_id -> data
+        self.lost_packets = []       # list of lost packet IDs
+        self.last_received = None    # keep track of last successfully received packet
 
     def receive_packet(self, packet_id, data):
         """
@@ -18,23 +19,30 @@ class Receiver:
         """
         chance = random.random()
         if chance < self.loss_rate:
+            # Packet lost
             self.lost_packets.append(packet_id)
             return False
         else:
-            self.received_packets[packet_id] = data
+            # Check for duplicate packet
+            if packet_id not in self.received_packets:
+                self.received_packets[packet_id] = data
+                self.last_received = packet_id
             return True
 
     def get_acknowledgment(self, packet_id):
         """
         Simulate sending acknowledgment.
-        Returns None if ack is lost, otherwise returns ack string.
+        Only send ACK if packet was actually received.
+        Returns None if ACK is lost, otherwise returns ACK string.
         """
         if packet_id in self.received_packets:
             chance = random.random()
             if chance < self.ack_loss_rate:
-                return None  # Ack lost
+                # ACK lost
+                return None
             else:
                 return f"Ack({packet_id})"
+        # Packet never received → no ACK sent
         return None
 
     def summary(self):

@@ -5,7 +5,7 @@ from receiver import Receiver
 def main():
     total_packets = 50
     loss_rate = 0.05
-    ack_loss_rate = 0.1   # 10% chance ack is lost
+    ack_loss_rate = 0.05
     resend_delay = 0.5
 
     sender = Sender(total_packets)
@@ -14,9 +14,7 @@ def main():
     sender.generate_packets()
     print(f"\n📦 Generated {sender.total_packets} packets.\n")
 
-    previous_ack = None
     packet_stats = {}  # track per-packet statistics
-
     overall_start = time.perf_counter()
 
     for packet_id, data in sender.packets.items():
@@ -26,9 +24,10 @@ def main():
 
         while True:
             attempts += 1
-            packet_data_sent += len(data)  # count data units sent
-            # send packet
-            print(f"\nSender ({packet_id}) ---> Receiver", end="", flush=True)
+            packet_data_sent += len(data)
+
+            # Send packet
+            print(f"Sender ({packet_id}) ---> Receiver", end="", flush=True)
             time.sleep(0.05)
 
             received = receiver.receive_packet(packet_id, data)
@@ -36,31 +35,31 @@ def main():
             if received:
                 ack = receiver.get_acknowledgment(packet_id)
                 time.sleep(0.02)
+
                 if ack:
                     print(f" ✅")
                     print(f"    Sender <--- {ack} Receiver")
                     sender.acknowledged.append(packet_id)
-                    previous_ack = ack
                     break
                 else:
-                    print(f" ❌ (ack lost)")
-                    if previous_ack:
-                        print(f"    Sender <--- {previous_ack} Receiver (delayed)")
+                    # ACK lost
+                    print(f" ❌ (ACK lost)")
                     time.sleep(resend_delay)
                     print(f"🔁 Resending {packet_id} ..........>", end="", flush=True)
+
             else:
+                # Packet lost
                 print(f" ❌ (packet lost)")
-                if previous_ack:
-                    print(f"    Sender <--- {previous_ack} Receiver (delayed)")
                 time.sleep(resend_delay)
                 print(f"🔁 Resending {packet_id} ..........>", end="", flush=True)
 
+        # Record per-packet stats
         packet_time = time.perf_counter() - packet_start
         packet_stats[packet_id] = {
             "attempts": attempts,
             "time": packet_time,
             "data_sent": packet_data_sent,
-            "acks_sent": attempts  # each attempt generates 1 ack
+            "acks_sent": attempts
         }
 
     overall_time = time.perf_counter() - overall_start
@@ -69,16 +68,15 @@ def main():
     print("\n" + "=" * 60)
     print("📊 Transmission Summary Report")
     print("=" * 60)
+
     total_attempts = sum(s["attempts"] for s in packet_stats.values())
     total_data_sent = sum(s["data_sent"] for s in packet_stats.values())
     total_acks = sum(s["acks_sent"] for s in packet_stats.values())
     extra_data = total_data_sent - total_packets * 3  # 3 numbers per packet
 
-    print(f"Total packets: {total_packets}")
-    print(f"Total packets acknowledged: {len(sender.acknowledged)}")
-    print(f"Total packets lost: {len(sender.lost)}")
-    print(f"Overall reliability: {len(sender.acknowledged)/total_packets:.2%}\n")
-
+   # print(f"Total packets: {total_packets}")
+   # print(f"Packets acknowledged: {len(sender.acknowledged)}")
+   # print(f"Overall reliability: {len(sender.acknowledged)/total_packets:.2%}")
     print(f"Total transmission time: {overall_time:.2f} s")
     print(f"Average time per packet: {overall_time/total_packets:.3f} s")
     print(f"Total attempts (including resends): {total_attempts}")
