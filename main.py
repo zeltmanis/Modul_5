@@ -82,7 +82,7 @@ def main():
     print(f"Total attempts (including resends): {total_attempts}")
     print(f"Average attempts per packet: {total_attempts/total_packets:.2f}")
     print(f"Total data sent (units): {total_data_sent}")
-    print(f"Extra data due to resends: {extra_data}")
+    print(f"Extra data (units) due to resends: {extra_data}")
     print(f"Total ACK messages sent: {total_acks}")
 
     print("\nReceiver summary:")
