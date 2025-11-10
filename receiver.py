@@ -1,7 +1,7 @@
 import random
 
 class Receiver:
-    def __init__(self, loss_rate=0.05, ack_loss_rate=0.02):
+    def __init__(self, loss_rate=0.05, ack_loss_rate=0.05):
         """
         :param loss_rate: Probability that a packet is lost.
         :param ack_loss_rate: Probability that an acknowledgment is lost.
